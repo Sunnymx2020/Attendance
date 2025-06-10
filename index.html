@@ -3,158 +3,169 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Professional Attendance Calendar</title>
+  <title>Modern Attendance Calendar</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <style>
     body {
       margin: 0;
       padding: 0;
-      background: #121212;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0d1a26;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       color: #e0e0e0;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
       overflow-x: hidden;
     }
-    h2 {
-      margin: 16px 0;
+    h1 {
       text-align: center;
-      font-weight: 600;
-      font-size: 1.8em;
-      color: #00aaff;
+      font-size: 2em;
+      font-weight: 700;
+      color: #40c4ff;
+      margin: 24px 16px 16px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
-    #calendar {
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
       padding: 16px;
-      background: #1e1e1e;
-      margin: 0 16px;
-      border-radius: 12px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-    }
-    #attendanceRecords {
       flex: 1;
-      overflow-y: auto;
-      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      background: #1e1e1e;
-      margin: 16px;
-      border-radius: 12px;
+      gap: 16px;
     }
-    .record {
-      max-width: 90%;
-      padding: 12px 16px;
-      border-radius: 20px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
-      font-size: 15px;
-      line-height: 1.4;
-      background: #2d2d2d;
-      color: #ddd;
-      align-self: flex-start;
-      border-bottom-left-radius: 4px;
+    .calendar-card {
+      background: #1c2526;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
-    .timestamp {
-      font-size: 10px;
-      color: #888;
-      margin-top: 4px;
-    }
-    #inputArea {
+    .input-card {
+      background: #1c2526;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       display: flex;
       flex-wrap: wrap;
-      padding: 12px 16px;
-      background: #222;
-      gap: 8px;
+      gap: 12px;
       align-items: center;
     }
-    #inputName, #datePicker {
+    .records-card {
+      background: #1c2526;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      flex: 1;
+      overflow-y: auto;
+      max-height: 400px;
+    }
+    .record {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: #2a3439;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      transition: transform 0.2s ease;
+    }
+    .record:hover {
+      transform: translateY(-2px);
+    }
+    .record-text {
+      font-size: 15px;
+      color: #e0e0e0;
+    }
+    .record-timestamp {
+      font-size: 12px;
+      color: #90a4ae;
+    }
+    input, select {
+      padding: 12px 16px;
+      font-size: 16px;
+      border-radius: 12px;
+      border: none;
+      background: #37474f;
+      color: #e0e0e0;
       flex: 1;
       min-width: 120px;
-      padding: 12px 16px;
-      font-size: 16px;
-      border-radius: 25px;
-      border: none;
-      background: #333;
-      color: #eee;
-      outline-offset: 2px;
+      outline: none;
     }
-    #inputName::placeholder, #datePicker::placeholder {
-      color: #888;
+    input::placeholder {
+      color: #90a4ae;
     }
     select {
-      padding: 12px 16px;
-      font-size: 16px;
-      border-radius: 25px;
-      border: none;
-      background: #333;
-      color: #eee;
       min-width: 100px;
     }
-    button {
-      background: #00aaff;
+    .btn {
+      background: linear-gradient(45deg, #40c4ff, #0288d1);
       border: none;
-      border-radius: 25px;
+      border-radius: 12px;
       color: #fff;
       padding: 12px 24px;
       font-weight: 600;
       font-size: 15px;
       cursor: pointer;
-      transition: background 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    button:hover {
-      background: #008fcc;
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-    #exportBtn {
-      margin: 10px 16px;
-      padding: 8px 16px;
-      font-size: 14px;
-      border-radius: 20px;
-      background: #f57c00;
-      border: none;
-      color: #fff;
-      cursor: pointer;
-      align-self: center;
-    }
-    #exportBtn:hover {
-      background: #ef6c00;
+    .export-btn {
+      background: linear-gradient(45deg, #ff8f00, #f57c00);
+      margin: 16px auto;
+      padding: 12px 24px;
+      border-radius: 12px;
+      display: block;
     }
     .flatpickr-calendar {
-      background: #2d2d2d;
+      background: #1c2526;
       color: #e0e0e0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     .flatpickr-day.selected, .flatpickr-day.today {
-      background: #00aaff;
-      border-color: #00aaff;
+      background: #40c4ff;
+      border-color: #40c4ff;
+    }
+    .flatpickr-day:hover {
+      background: #37474f;
     }
     @media (max-width: 600px) {
-      #inputArea {
+      .input-card {
         flex-direction: column;
         align-items: stretch;
       }
-      #inputName, #datePicker, select, button {
+      input, select, .btn {
         width: 100%;
         margin-bottom: 8px;
       }
-      h2 {
-        font-size: 1.5em;
+      h1 {
+        font-size: 1.6em;
+      }
+      .records-card {
+        max-height: 300px;
       }
     }
   </style>
 </head>
 <body>
-  <h2>📅 Professional Attendance Calendar</h2>
-  <div id="calendar"></div>
-  <div id="attendanceRecords" aria-live="polite" aria-label="Attendance records"></div>
-  <div id="inputArea">
-    <input type="text" id="inputName" placeholder="Enter name..." autocomplete="off" aria-label="Name input" />
-    <input type="text" id="datePicker" placeholder="Select date..." aria-label="Date picker" readonly />
-    <select id="statusSelect" aria-label="Attendance status">
-      <option value="Present">Present</option>
-      <option value="Absent">Absent</option>
-    </select>
-    <button id="markBtn" aria-label="Mark attendance">Mark</button>
+  <h1>📅 Modern Attendance Calendar</h1>
+  <div class="container">
+    <div class="calendar-card">
+      <input type="text" id="datePicker" placeholder="Select date..." aria-label="Date picker" readonly />
+    </div>
+    <div class="input-card">
+      <input type="text" id="inputName" placeholder="Enter name..." autocomplete="off" aria-label="Name input" />
+      <select id="statusSelect" aria-label="Attendance status">
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+      </select>
+      <button class="btn" id="markBtn" aria-label="Mark attendance">Mark</button>
+    </div>
+    <div class="records-card" id="attendanceRecords" aria-live="polite" aria-label="Attendance records"></div>
   </div>
-  <button id="exportBtn" aria-label="Export attendance records">Export Records (JSON)</button>
+  <button class="export-btn btn" id="exportBtn" aria-label="Export attendance records">Export Records (JSON)</button>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -205,20 +216,16 @@
     function addRecord(name, status, date, timestamp) {
       const div = document.createElement('div');
       div.className = 'record';
-      div.textContent = `${name}: ${status}`;
+      div.innerHTML = `
+        <span class="record-text">${name}: ${status}</span>
+        <span class="record-timestamp">${new Date(parseInt(timestamp)).toLocaleString()}</span>
+      `;
 
-      const time = document.createElement('div');
-      time.className = 'timestamp';
-      time.textContent = new Date(parseInt(timestamp)).toLocaleString();
-      div.appendChild(time);
-
-      // Allow deletion of attendance record
       let pressTimer = null;
       function deleteRecord(recordId) {
         if (confirm(`Delete this attendance record?\n\nName: ${name}\nStatus: ${status}\nTime: ${new Date(parseInt(timestamp)).toLocaleString()}`)) {
           attendanceRef.child(date).child(recordId).remove().then(() => {
-            div.textContent = "(Deleted record)";
-            div.appendChild(time);
+            div.innerHTML = `<span class="record-text">(Deleted record)</span><span class="record-timestamp">${new Date(parseInt(timestamp)).toLocaleString()}</span>`;
           });
         }
       }
@@ -242,9 +249,8 @@
       records.scrollTop = records.scrollHeight;
     }
 
-    // Load records for a specific date
     function loadRecords(date) {
-      records.innerHTML = ''; // Clear current records
+      records.innerHTML = '';
       attendanceRef.child(date).on('child_added', snapshot => {
         const data = snapshot.val();
         addRecord(data.name, data.status, date, snapshot.key);
