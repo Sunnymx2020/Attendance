@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Attendance App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Professional Attendance Calendar</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <style>
     body {
       margin: 0;
@@ -13,13 +14,22 @@
       color: #e0e0e0;
       display: flex;
       flex-direction: column;
-      height: 100vh;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
     h2 {
-      margin: 12px 0;
+      margin: 16px 0;
       text-align: center;
       font-weight: 600;
+      font-size: 1.8em;
       color: #00aaff;
+    }
+    #calendar {
+      padding: 16px;
+      background: #1e1e1e;
+      margin: 0 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
     }
     #attendanceRecords {
       flex: 1;
@@ -29,16 +39,16 @@
       flex-direction: column;
       gap: 12px;
       background: #1e1e1e;
+      margin: 16px;
+      border-radius: 12px;
     }
     .record {
-      max-width: 75%;
+      max-width: 90%;
       padding: 12px 16px;
       border-radius: 20px;
-      box-shadow: 0 2px 5px rgb(0 0 0 / 0.4);
-      position: relative;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
       font-size: 15px;
       line-height: 1.4;
-      user-select: text;
       background: #2d2d2d;
       color: #ddd;
       align-self: flex-start;
@@ -48,17 +58,18 @@
       font-size: 10px;
       color: #888;
       margin-top: 4px;
-      user-select: none;
     }
     #inputArea {
       display: flex;
+      flex-wrap: wrap;
       padding: 12px 16px;
       background: #222;
+      gap: 8px;
       align-items: center;
-      gap: 12px;
     }
-    #inputName {
+    #inputName, #datePicker {
       flex: 1;
+      min-width: 120px;
       padding: 12px 16px;
       font-size: 16px;
       border-radius: 25px;
@@ -67,7 +78,7 @@
       color: #eee;
       outline-offset: 2px;
     }
-    #inputName::placeholder {
+    #inputName::placeholder, #datePicker::placeholder {
       color: #888;
     }
     select {
@@ -77,7 +88,7 @@
       border: none;
       background: #333;
       color: #eee;
-      outline-offset: 2px;
+      min-width: 100px;
     }
     button {
       background: #00aaff;
@@ -88,7 +99,6 @@
       font-weight: 600;
       font-size: 15px;
       cursor: pointer;
-      user-select: none;
       transition: background 0.2s ease;
     }
     button:hover {
@@ -104,18 +114,40 @@
       color: #fff;
       cursor: pointer;
       align-self: center;
-      user-select: none;
     }
     #exportBtn:hover {
       background: #ef6c00;
     }
+    .flatpickr-calendar {
+      background: #2d2d2d;
+      color: #e0e0e0;
+    }
+    .flatpickr-day.selected, .flatpickr-day.today {
+      background: #00aaff;
+      border-color: #00aaff;
+    }
+    @media (max-width: 600px) {
+      #inputArea {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      #inputName, #datePicker, select, button {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+      h2 {
+        font-size: 1.5em;
+      }
+    }
   </style>
 </head>
 <body>
-  <h2>📅 Attendance App</h2>
+  <h2>📅 Professional Attendance Calendar</h2>
+  <div id="calendar"></div>
   <div id="attendanceRecords" aria-live="polite" aria-label="Attendance records"></div>
   <div id="inputArea">
     <input type="text" id="inputName" placeholder="Enter name..." autocomplete="off" aria-label="Name input" />
+    <input type="text" id="datePicker" placeholder="Select date..." aria-label="Date picker" readonly />
     <select id="statusSelect" aria-label="Attendance status">
       <option value="Present">Present</option>
       <option value="Absent">Absent</option>
@@ -127,6 +159,8 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Flatpickr -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
   <script>
     // Firebase config
@@ -144,9 +178,17 @@
 
     const records = document.getElementById('attendanceRecords');
     const inputName = document.getElementById('inputName');
+    const datePicker = document.getElementById('datePicker');
     const statusSelect = document.getElementById('statusSelect');
     const markBtn = document.getElementById('markBtn');
     const exportBtn = document.getElementById('exportBtn');
+
+    // Initialize Flatpickr
+    flatpickr("#datePicker", {
+      dateFormat: "Y-m-d",
+      maxDate: "today",
+      onChange: (selectedDates, dateStr) => loadRecords(dateStr)
+    });
 
     // Generate or get userId (UUID v4)
     let userId = localStorage.getItem('attendanceUserId');
@@ -160,21 +202,21 @@
 
     const attendanceRef = db.ref('attendance/' + userId);
 
-    function addRecord(name, status, timestamp) {
+    function addRecord(name, status, date, timestamp) {
       const div = document.createElement('div');
       div.className = 'record';
       div.textContent = `${name}: ${status}`;
 
       const time = document.createElement('div');
       time.className = 'timestamp';
-      time.textContent = new Date(timestamp).toLocaleString();
+      time.textContent = new Date(parseInt(timestamp)).toLocaleString();
       div.appendChild(time);
 
       // Allow deletion of attendance record
       let pressTimer = null;
       function deleteRecord(recordId) {
-        if (confirm(`Delete this attendance record?\n\nName: ${name}\nStatus: ${status}\nTime: ${new Date(timestamp).toLocaleString()}`)) {
-          attendanceRef.child(recordId).remove().then(() => {
+        if (confirm(`Delete this attendance record?\n\nName: ${name}\nStatus: ${status}\nTime: ${new Date(parseInt(timestamp)).toLocaleString()}`)) {
+          attendanceRef.child(date).child(recordId).remove().then(() => {
             div.textContent = "(Deleted record)";
             div.appendChild(time);
           });
@@ -195,29 +237,33 @@
         }
       });
 
-      div.dataset.recordId = timestamp; // Store record ID for deletion
+      div.dataset.recordId = timestamp;
       records.appendChild(div);
       records.scrollTop = records.scrollHeight;
     }
 
-    // Load existing attendance records
-    attendanceRef.on('child_added', snapshot => {
-      const data = snapshot.val();
-      addRecord(data.name, data.status, snapshot.key);
-    });
+    // Load records for a specific date
+    function loadRecords(date) {
+      records.innerHTML = ''; // Clear current records
+      attendanceRef.child(date).on('child_added', snapshot => {
+        const data = snapshot.val();
+        addRecord(data.name, data.status, date, snapshot.key);
+      });
+    }
 
     async function markAttendance() {
       const name = inputName.value.trim();
+      const date = datePicker.value;
       const status = statusSelect.value;
-      if (!name) {
-        alert('Please enter a name.');
+      if (!name || !date) {
+        alert('Please enter a name and select a date.');
         return;
       }
       inputName.value = '';
 
       const timestamp = Date.now();
       const record = { name, status, timestamp };
-      await attendanceRef.child(timestamp).set(record);
+      await attendanceRef.child(date).child(timestamp).set(record);
     }
 
     markBtn.onclick = markAttendance;
@@ -241,6 +287,11 @@
       a.click();
       URL.revokeObjectURL(url);
     };
+
+    // Load records for today by default
+    const today = new Date().toISOString().slice(0, 10);
+    datePicker.value = today;
+    loadRecords(today);
   </script>
 </body>
 </html>
