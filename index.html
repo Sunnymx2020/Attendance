@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="UTF-8">
+  <meta name="viewport" content="width=device-size, initial-scale=1.0">
   <title>Elite Attendance Calendar</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.com/npm/flatpickr.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;700&display=swap">
   <style>
     * {
       box-sizing: border-box;
@@ -23,12 +24,12 @@
       padding-bottom: 20px;
     }
     h1 {
-      text-align: center;
       font-size: clamp(1.5rem, 5vw, 2rem);
       font-weight: 700;
       color: #64ffda;
       margin: 24px 16px 16px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     .container {
       max-width: 1000px;
@@ -43,9 +44,15 @@
       background: #112240;
       border-radius: 16px;
       padding: 16px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.0.4);
       transition: transform 0.3s ease;
       animation: fadeIn 0.5s ease;
+    }
+    .input-card {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
     }
     .records-card {
       flex: 1;
@@ -57,6 +64,8 @@
     }
     .salary-card {
       background: linear-gradient(45deg, #112240, #1c2b4a);
+      max-height: 20vh;
+      overflow-y: auto;
     }
     .salary-item {
       padding: 12px;
@@ -78,7 +87,7 @@
     }
     .record:hover, .record:active {
       transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.0.3);
     }
     .record-text {
       font-size: clamp(14px, 4vw, 15px);
@@ -107,6 +116,18 @@
     input::placeholder {
       color: #8892b0;
     }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: clamp(14px, 4vw, 15px);
+      color: #ccd6f6;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #64ffda;
+    }
     .btn {
       background: linear-gradient(45deg, #64ffda, #00b0ff);
       border: none;
@@ -121,19 +142,29 @@
     }
     .btn:hover, .btn:active {
       transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.0.3);
     }
-    .export-btn {
+    .export-btn, .login-btn, .logout-btn {
       background: linear-gradient(45deg, #ff6b6b, #ff8e53);
       margin: 16px auto;
       padding: 12px 24px;
       border-radius: 12px;
       display: block;
     }
+    .login-card {
+      background: #112240;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.0.4);
+      text-align: center;
+      max-width: 400px;
+      margin: 16px auto;
+      animation: fadeIn 0.5s ease;
+    }
     .flatpickr-calendar {
       background: #112240;
       color: #ccd6f6;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.0.4);
       font-family: 'Inter', sans-serif;
     }
     .flatpickr-day.selected, .flatpickr-day.today {
@@ -153,16 +184,12 @@
         flex-direction: column;
         align-items: stretch;
       }
-      input, select, .btn {
+      input, select, .btn, .checkbox-label {
         width: 100%;
         margin-bottom: 8px;
       }
-      .records-card {
+      .records-card, .salary-card {
         max-height: 30vh;
-      }
-      .salary-card {
-        max-height: 20vh;
-        overflow-y: auto;
       }
       h1 {
         font-size: clamp(1.2rem, 4vw, 1.6rem);
@@ -181,16 +208,25 @@
         width: 100%;
       }
     }
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <h1>📅 Elite Attendance Calendar</h1>
-  <div class="container">
+  <div class="login-card" id="loginCard">
+    <h2>Admin Login</h2>
+    <input type="password" id="adminPassword" placeholder="Enter admin password..." aria-label="Admin password" />
+    <button class="login-btn btn" id="loginBtn" aria-label="Login">Login</button>
+  </div>
+  <h1 class="hidden" id="appTitle">📅 Elite Attendance Calendar</h1>
+  <div class="container hidden" id="appContainer">
     <div class="calendar-card">
       <input type="text" id="datePicker" placeholder="Select date..." aria-label="Date picker" readonly />
     </div>
-    <div class="input-card">
-      <input type="text" id="inputName" placeholder="Enter name..." autocomplete="off" aria-label="Name input" />
+    <div class="input-card" id="inputCard">
+      <input type="text" id="inputName" list="nameSuggestions" placeholder="Enter name..." autocomplete="off" aria-label="Name input" />
+      <datalist id="nameSuggestions"></datalist>
       <select id="designationSelect" aria-label="Designation">
         <option value="Officeboy">Officeboy</option>
         <option value="Housekeeping">Housekeeping</option>
@@ -200,12 +236,17 @@
         <option value="Present">Present</option>
         <option value="Absent">Absent</option>
       </select>
+      <label class="checkbox-label">
+        <input type="checkbox" id="weekOff" aria-label="Week-off (Paid)" />
+        Week-off (Paid)
+      </label>
       <button class="btn" id="markBtn" aria-label="Mark attendance">Mark</button>
     </div>
     <div class="records-card" id="attendanceRecords" aria-live="polite" aria-label="Attendance records"></div>
     <div class="salary-card" id="salarySummary" aria-label="Salary summary"></div>
   </div>
   <button class="export-btn btn" id="exportBtn" aria-label="Export attendance records">Export Records (JSON)</button>
+  <button class="logout-btn btn hidden" id="logoutBtn" aria-label="Logout">Logout</button>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -230,17 +271,66 @@
     const records = document.getElementById('attendanceRecords');
     const salarySummary = document.getElementById('salarySummary');
     const inputName = document.getElementById('inputName');
+    const nameSuggestions = document.getElementById('nameSuggestions');
     const datePicker = document.getElementById('datePicker');
     const designationSelect = document.getElementById('designationSelect');
     const statusSelect = document.getElementById('statusSelect');
+    const weekOff = document.getElementById('weekOff');
     const markBtn = document.getElementById('markBtn');
     const exportBtn = document.getElementById('exportBtn');
+    const loginCard = document.getElementById('loginCard');
+    const adminPassword = document.getElementById('adminPassword');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const appTitle = document.getElementById('appTitle');
+    const appContainer = document.getElementById('appContainer');
+    const inputCard = document.getElementById('inputCard');
 
     // Salary configuration
     const salaryConfig = {
-      Officeboy: 16266.50, // Midpoint of 16233–16300
-      Housekeeping: 14250, // Midpoint of 14200–14300
+      Officeboy: 16266.50,
+      Housekeeping: 14250,
       MST: 19500
+    };
+
+    // Admin password (hardcoded for simplicity)
+    const ADMIN_PASSWORD = 'admin123';
+    let isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+    // Initialize UI based on admin status
+    function initUI() {
+      if (isAdmin) {
+        loginCard.classList.add('hidden');
+        appTitle.classList.remove('hidden');
+        appContainer.classList.remove('hidden');
+        inputCard.classList.remove('hidden');
+        logoutBtn.classList.remove('hidden');
+      } else {
+        loginCard.classList.remove('hidden');
+        appTitle.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        inputCard.classList.add('hidden');
+        logoutBtn.classList.add('hidden');
+      }
+    }
+
+    // Login handler
+    loginBtn.onclick = () => {
+      if (adminPassword.value === ADMIN_PASSWORD) {
+        isAdmin = true;
+        localStorage.setItem('isAdmin', 'true');
+        initUI();
+        adminPassword.value = '';
+      } else {
+        alert('Incorrect password.');
+      }
+    };
+
+    // Logout handler
+    logoutBtn.onclick = () => {
+      isAdmin = false;
+      localStorage.setItem('isAdmin', 'false');
+      initUI();
     };
 
     // Initialize Flatpickr
@@ -266,6 +356,19 @@
 
     const attendanceRef = db.ref('attendance/' + userId);
 
+    // Load name suggestions
+    async function loadNameSuggestions() {
+      const snapshot = await attendanceRef.get();
+      const data = snapshot.exists() ? snapshot.val() : {};
+      const names = new Set();
+      Object.values(data).forEach(records => {
+        Object.values(records).forEach(record => names.add(record.name));
+      });
+      nameSuggestions.innerHTML = Array.from(names)
+        .map(name => `<option value="${name}">`)
+        .join('');
+    }
+
     function addRecord(name, designation, status, date, timestamp) {
       const div = document.createElement('div');
       div.className = 'record';
@@ -274,42 +377,45 @@
         <span class="record-timestamp">${new Date(parseInt(timestamp)).toLocaleString()}</span>
       `;
 
-      let pressTimer = null;
-      let touchStartX = 0;
-      let touchEndX = 0;
+      if (isAdmin) {
+        let pressTimer = null;
+        let touchStartX = 0;
+        let touchEndX = 0;
 
-      function deleteRecord(recordId) {
-        if (confirm(`Delete this record?\n\nName: ${name}\nDesignation: ${designation}\nStatus: ${status}\nTime: ${new Date(parseInt(timestamp)).toLocaleString()}`)) {
-          attendanceRef.child(date).child(recordId).remove().then(() => {
-            div.innerHTML = `<span class="record-text">(Deleted record)</span><span class="record-timestamp">${new Date(parseInt(timestamp)).toLocaleString()}</span>`;
-            loadSalarySummary(date); // Refresh salary after deletion
-          });
+        function deleteRecord(recordId) {
+          if (confirm(`Delete this record?\n\nName: ${name}\nDesignation: ${designation}\nStatus: ${status}\nTime: ${new Date(parseInt(timestamp)).toLocaleString()}`)) {
+            attendanceRef.child(date).child(recordId).remove().then(() => {
+              div.innerHTML = `<span class="record-text">(Deleted record)</span><span class="record-timestamp">${new Date(parseInt(timestamp)).toLocaleString()}</span>`;
+              loadSalarySummary(date);
+            });
+          }
         }
-      }
 
-      div.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-        pressTimer = setTimeout(() => deleteRecord(div.dataset.recordId), 1000);
-      });
-      div.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        clearTimeout(pressTimer);
-        if (Math.abs(touchEndX - touchStartX) > 100) {
-          deleteRecord(div.dataset.recordId);
-        }
-      });
-      div.addEventListener('contextmenu', e => {
-        e.preventDefault();
-        deleteRecord(div.dataset.recordId);
-      });
-      div.addEventListener('mousedown', e => {
-        if (e.button === 2) {
+        div.addEventListener('touchstart', e => {
+          touchStartX = e.changedTouches[0].screenX;
+          pressTimer = setTimeout(() => deleteRecord(div.dataset.recordId), 1000);
+        });
+        div.addEventListener('touchend', e => {
+          touchEndX = e.changedTouches[0].screenX;
+          clearTimeout(pressTimer);
+          if (Math.abs(touchEndX - touchStartX) > 100) {
+            deleteRecord(div.dataset.recordId);
+          }
+        });
+        div.addEventListener('contextmenu', e => {
           e.preventDefault();
           deleteRecord(div.dataset.recordId);
-        }
-      });
+        });
+        div.addEventListener('mousedown', e => {
+          if (e.button === 2) {
+            e.preventDefault();
+            deleteRecord(div.dataset.recordId);
+          }
+        });
 
-      div.dataset.recordId = timestamp;
+        div.dataset.recordId = timestamp;
+      }
+
       records.appendChild(div);
       records.scrollTop = records.scrollHeight;
     }
@@ -324,35 +430,32 @@
 
     async function loadSalarySummary(date) {
       salarySummary.innerHTML = '';
-      const yearMonth = date.slice(0, 7); // e.g., "2025-06"
+      const yearMonth = date.slice(0, 7);
       const daysInMonth = new Date(date.slice(0, 4), parseInt(date.slice(5, 7)), 0).getDate();
       
-      // Fetch all records for the month
       const snapshot = await attendanceRef.orderByKey().startAt(yearMonth + '-01').endAt(yearMonth + '-31').get();
       const data = snapshot.exists() ? snapshot.val() : {};
 
-      // Aggregate present days by employee and designation
       const employeeData = {};
       Object.entries(data).forEach(([recordDate, records]) => {
         Object.entries(records).forEach(([_, record]) => {
           const key = `${record.name}_${record.designation}`;
           if (!employeeData[key]) {
-            employeeData[key] = { name: record.name, designation: record.designation, presentDays: 0 };
+            employeeData[key] = { name: record.name, designation: record.designation, paidDays: 0 };
           }
-          if (record.status === 'Present') {
-            employeeData[key].presentDays++;
+          if (record.status === 'Present' || record.status === 'Week-off') {
+            employeeData[key].paidDays++;
           }
         });
       });
 
-      // Calculate and display salaries
-      Object.values(employeeData).forEach(({ name, designation, presentDays }) => {
+      Object.values(employeeData).forEach(({ name, designation, paidDays }) => {
         const monthlySalary = salaryConfig[designation] || 0;
         const dailySalary = monthlySalary / daysInMonth;
-        const calculatedSalary = Math.round(dailySalary * presentDays);
+        const calculatedSalary = Math.round(dailySalary * paidDays);
         const div = document.createElement('div');
         div.className = 'salary-item';
-        div.textContent = `${name} (${designation}): ${presentDays} days present, This month salary: ₹${calculatedSalary}`;
+        div.textContent = `${name} (${designation}): ${paidDays} paid days, This month salary: ₹${calculatedSalary}`;
         salarySummary.appendChild(div);
       });
     }
@@ -361,26 +464,30 @@
       const name = inputName.value.trim();
       const designation = designationSelect.value;
       const date = datePicker.value;
-      const status = statusSelect.value;
+      const status = weekOff.checked ? 'Week-off' : statusSelect.value;
       if (!name || !date || !designation) {
         alert('Please enter a name, select a designation, and select a date.');
         return;
       }
       inputName.value = '';
+      weekOff.checked = false;
 
       const timestamp = Date.now();
       const record = { name, designation, status, timestamp };
       await attendanceRef.child(date).child(timestamp).set(record);
-      loadSalarySummary(date); // Refresh salary summary
+      loadSalarySummary(date);
+      loadNameSuggestions();
     }
 
-    markBtn.onclick = markAttendance;
-    inputName.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        markAttendance();
-      }
-    });
+    if (isAdmin) {
+      markBtn.onclick = markAttendance;
+      inputName.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          markAttendance();
+        }
+      });
+    }
 
     exportBtn.onclick = async () => {
       const snapshot = await attendanceRef.get();
@@ -396,11 +503,13 @@
       URL.revokeObjectURL(url);
     };
 
-    // Load records and salary for today by default
+    // Load records, salary, and names for today by default
     const today = new Date().toISOString().slice(0, 10);
     datePicker.value = today;
     loadRecords(today);
     loadSalarySummary(today);
+    loadNameSuggestions();
+    initUI();
   </script>
 </body>
 </html>
