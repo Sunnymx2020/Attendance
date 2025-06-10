@@ -39,35 +39,32 @@
       flex-direction: column;
       gap: 16px;
     }
-    .calendar-card {
+    .calendar-card, .input-card, .records-card, .salary-card {
       background: #112240;
       border-radius: 16px;
       padding: 16px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
       transition: transform 0.3s ease;
-    }
-    .input-card {
-      background: #112240;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
       animation: fadeIn 0.5s ease;
     }
     .records-card {
-      background: #112240;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
       flex: 1;
       overflow-y: auto;
-      max-height: 50vh;
+      max-height: 40vh;
       display: flex;
       flex-direction: column;
       gap: 8px;
+    }
+    .salary-card {
+      background: linear-gradient(45deg, #112240, #1c2b4a);
+    }
+    .salary-item {
+      padding: 12px;
+      background: #1c2b4a;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      font-size: clamp(14px, 4vw, 15px);
+      color: #ccd6f6;
     }
     .record {
       display: flex;
@@ -161,7 +158,11 @@
         margin-bottom: 8px;
       }
       .records-card {
-        max-height: 40vh;
+        max-height: 30vh;
+      }
+      .salary-card {
+        max-height: 20vh;
+        overflow-y: auto;
       }
       h1 {
         font-size: clamp(1.2rem, 4vw, 1.6rem);
@@ -171,7 +172,7 @@
       }
     }
     @media (max-width: 400px) {
-      .record {
+      .record, .salary-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 4px;
@@ -190,6 +191,11 @@
     </div>
     <div class="input-card">
       <input type="text" id="inputName" placeholder="Enter name..." autocomplete="off" aria-label="Name input" />
+      <select id="designationSelect" aria-label="Designation">
+        <option value="Officeboy">Officeboy</option>
+        <option value="Housekeeping">Housekeeping</option>
+        <option value="MST">MST</option>
+      </select>
       <select id="statusSelect" aria-label="Attendance status">
         <option value="Present">Present</option>
         <option value="Absent">Absent</option>
@@ -197,6 +203,7 @@
       <button class="btn" id="markBtn" aria-label="Mark attendance">Mark</button>
     </div>
     <div class="records-card" id="attendanceRecords" aria-live="polite" aria-label="Attendance records"></div>
+    <div class="salary-card" id="salarySummary" aria-label="Salary summary"></div>
   </div>
   <button class="export-btn btn" id="exportBtn" aria-label="Export attendance records">Export Records (JSON)</button>
 
@@ -221,18 +228,30 @@
     const db = firebase.database();
 
     const records = document.getElementById('attendanceRecords');
+    const salarySummary = document.getElementById('salarySummary');
     const inputName = document.getElementById('inputName');
     const datePicker = document.getElementById('datePicker');
+    const designationSelect = document.getElementById('designationSelect');
     const statusSelect = document.getElementById('statusSelect');
     const markBtn = document.getElementById('markBtn');
     const exportBtn = document.getElementById('exportBtn');
+
+    // Salary configuration
+    const salaryConfig = {
+      Officeboy: 16266.50, // Midpoint of 16233–16300
+      Housekeeping: 14250, // Midpoint of 14200–14300
+      MST: 19500
+    };
 
     // Initialize Flatpickr
     flatpickr("#datePicker", {
       dateFormat: "Y-m-d",
       maxDate: "today",
-      onChange: (selectedDates, dateStr) => loadRecords(dateStr),
-      disableMobile: false // Ensure native picker on mobile
+      onChange: (selectedDates, dateStr) => {
+        loadRecords(dateStr);
+        loadSalarySummary(dateStr);
+      },
+      disableMobile: false
     });
 
     // Generate or get userId (UUID v4)
@@ -247,11 +266,11 @@
 
     const attendanceRef = db.ref('attendance/' + userId);
 
-    function addRecord(name, status, date, timestamp) {
+    function addRecord(name, designation, status, date, timestamp) {
       const div = document.createElement('div');
       div.className = 'record';
       div.innerHTML = `
-        <span class="record-text">${name}: ${status}</span>
+        <span class="record-text">${name} (${designation}): ${status}</span>
         <span class="record-timestamp">${new Date(parseInt(timestamp)).toLocaleString()}</span>
       `;
 
@@ -260,14 +279,14 @@
       let touchEndX = 0;
 
       function deleteRecord(recordId) {
-        if (confirm(`Delete this record?\n\nName: ${name}\nStatus: ${status}\nTime: ${new Date(parseInt(timestamp)).toLocaleString()}`)) {
+        if (confirm(`Delete this record?\n\nName: ${name}\nDesignation: ${designation}\nStatus: ${status}\nTime: ${new Date(parseInt(timestamp)).toLocaleString()}`)) {
           attendanceRef.child(date).child(recordId).remove().then(() => {
             div.innerHTML = `<span class="record-text">(Deleted record)</span><span class="record-timestamp">${new Date(parseInt(timestamp)).toLocaleString()}</span>`;
+            loadSalarySummary(date); // Refresh salary after deletion
           });
         }
       }
 
-      // Long-press deletion
       div.addEventListener('touchstart', e => {
         touchStartX = e.changedTouches[0].screenX;
         pressTimer = setTimeout(() => deleteRecord(div.dataset.recordId), 1000);
@@ -275,7 +294,7 @@
       div.addEventListener('touchend', e => {
         touchEndX = e.changedTouches[0].screenX;
         clearTimeout(pressTimer);
-        if (Math.abs(touchEndX - touchStartX) > 100) { // Swipe detection
+        if (Math.abs(touchEndX - touchStartX) > 100) {
           deleteRecord(div.dataset.recordId);
         }
       });
@@ -299,23 +318,60 @@
       records.innerHTML = '';
       attendanceRef.child(date).on('child_added', snapshot => {
         const data = snapshot.val();
-        addRecord(data.name, data.status, date, snapshot.key);
+        addRecord(data.name, data.designation, data.status, date, snapshot.key);
+      });
+    }
+
+    async function loadSalarySummary(date) {
+      salarySummary.innerHTML = '';
+      const yearMonth = date.slice(0, 7); // e.g., "2025-06"
+      const daysInMonth = new Date(date.slice(0, 4), parseInt(date.slice(5, 7)), 0).getDate();
+      
+      // Fetch all records for the month
+      const snapshot = await attendanceRef.orderByKey().startAt(yearMonth + '-01').endAt(yearMonth + '-31').get();
+      const data = snapshot.exists() ? snapshot.val() : {};
+
+      // Aggregate present days by employee and designation
+      const employeeData = {};
+      Object.entries(data).forEach(([recordDate, records]) => {
+        Object.entries(records).forEach(([_, record]) => {
+          const key = `${record.name}_${record.designation}`;
+          if (!employeeData[key]) {
+            employeeData[key] = { name: record.name, designation: record.designation, presentDays: 0 };
+          }
+          if (record.status === 'Present') {
+            employeeData[key].presentDays++;
+          }
+        });
+      });
+
+      // Calculate and display salaries
+      Object.values(employeeData).forEach(({ name, designation, presentDays }) => {
+        const monthlySalary = salaryConfig[designation] || 0;
+        const dailySalary = monthlySalary / daysInMonth;
+        const calculatedSalary = Math.round(dailySalary * presentDays);
+        const div = document.createElement('div');
+        div.className = 'salary-item';
+        div.textContent = `${name} (${designation}): ${presentDays} days present, This month salary: ₹${calculatedSalary}`;
+        salarySummary.appendChild(div);
       });
     }
 
     async function markAttendance() {
       const name = inputName.value.trim();
+      const designation = designationSelect.value;
       const date = datePicker.value;
       const status = statusSelect.value;
-      if (!name || !date) {
-        alert('Please enter a name and select a date.');
+      if (!name || !date || !designation) {
+        alert('Please enter a name, select a designation, and select a date.');
         return;
       }
       inputName.value = '';
 
       const timestamp = Date.now();
-      const record = { name, status, timestamp };
+      const record = { name, designation, status, timestamp };
       await attendanceRef.child(date).child(timestamp).set(record);
+      loadSalarySummary(date); // Refresh salary summary
     }
 
     markBtn.onclick = markAttendance;
@@ -340,10 +396,11 @@
       URL.revokeObjectURL(url);
     };
 
-    // Load records for today by default
+    // Load records and salary for today by default
     const today = new Date().toISOString().slice(0, 10);
     datePicker.value = today;
     loadRecords(today);
+    loadSalarySummary(today);
   </script>
 </body>
 </html>
