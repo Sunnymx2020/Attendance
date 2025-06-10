@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="UTF-8">
-  <meta name="viewport" content="width=device-size, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Elite Attendance Calendar</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.com/npm/flatpickr.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
   <style>
     * {
       box-sizing: border-box;
@@ -24,12 +23,12 @@
       padding-bottom: 20px;
     }
     h1 {
+      text-align: center;
       font-size: clamp(1.5rem, 5vw, 2rem);
       font-weight: 700;
       color: #64ffda;
       margin: 24px 16px 16px;
-      text-align: center;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     .container {
       max-width: 1000px;
@@ -44,7 +43,7 @@
       background: #112240;
       border-radius: 16px;
       padding: 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.0.4);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
       transition: transform 0.3s ease;
       animation: fadeIn 0.5s ease;
     }
@@ -87,7 +86,7 @@
     }
     .record:hover, .record:active {
       transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     .record-text {
       font-size: clamp(14px, 4vw, 15px);
@@ -142,7 +141,7 @@
     }
     .btn:hover, .btn:active {
       transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     .export-btn, .login-btn, .logout-btn {
       background: linear-gradient(45deg, #ff6b6b, #ff8e53);
@@ -151,20 +150,44 @@
       border-radius: 12px;
       display: block;
     }
+    .user-icon {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      font-size: 24px;
+      color: #64ffda;
+      cursor: pointer;
+      background: #1c2b4a;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease;
+    }
+    .user-icon:hover {
+      transform: scale(1.1);
+    }
     .login-card {
       background: #112240;
       border-radius: 16px;
       padding: 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.0.4);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
       text-align: center;
       max-width: 400px;
       margin: 16px auto;
       animation: fadeIn 0.5s ease;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
     }
     .flatpickr-calendar {
       background: #112240;
       color: #ccd6f6;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.0.4);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
       font-family: 'Inter', sans-serif;
     }
     .flatpickr-day.selected, .flatpickr-day.today {
@@ -207,6 +230,11 @@
       .record-text, .record-timestamp {
         width: 100%;
       }
+      .user-icon {
+        font-size: 20px;
+        width: 36px;
+        height: 36px;
+      }
     }
     .hidden {
       display: none;
@@ -214,17 +242,18 @@
   </style>
 </head>
 <body>
-  <div class="login-card" id="loginCard">
+  <div class="user-icon" id="userIcon" aria-label="Admin Login">👤</div>
+  <div class="login-card hidden" id="loginCard">
     <h2>Admin Login</h2>
     <input type="password" id="adminPassword" placeholder="Enter admin password..." aria-label="Admin password" />
     <button class="login-btn btn" id="loginBtn" aria-label="Login">Login</button>
   </div>
-  <h1 class="hidden" id="appTitle">📅 Elite Attendance Calendar</h1>
-  <div class="container hidden" id="appContainer">
+  <h1 id="appTitle">📅 Elite Attendance Calendar</h1>
+  <div class="container" id="appContainer">
     <div class="calendar-card">
       <input type="text" id="datePicker" placeholder="Select date..." aria-label="Date picker" readonly />
     </div>
-    <div class="input-card" id="inputCard">
+    <div class="input-card hidden" id="inputCard">
       <input type="text" id="inputName" list="nameSuggestions" placeholder="Enter name..." autocomplete="off" aria-label="Name input" />
       <datalist id="nameSuggestions"></datalist>
       <select id="designationSelect" aria-label="Designation">
@@ -257,13 +286,13 @@
   <script>
     // Firebase config
     const firebaseConfig = {
-      apiKey: "AIzaSyBPF1VE82Y3VkZe6IibjqKxBC-XHjM_Wco",
+      apiKey: "1234567890",
       authDomain: "chat-2024-ff149.firebaseapp.com",
       databaseURL: "https://chat-2024-ff149-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "chat-2024-ff149",
       storageBucket: "chat-2024-ff149.appspot.com",
       messagingSenderId: "146349109253",
-      appId: "1:146349109253:android:e593afbf0584762519ac6c"
+      appId: "1:146349109253:android:1234567890ac6c"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -278,6 +307,7 @@
     const weekOff = document.getElementById('weekOff');
     const markBtn = document.getElementById('markBtn');
     const exportBtn = document.getElementById('exportBtn');
+    const userIcon = document.getElementById('userIcon');
     const loginCard = document.getElementById('loginCard');
     const adminPassword = document.getElementById('adminPassword');
     const loginBtn = document.getElementById('loginBtn');
@@ -305,14 +335,22 @@
         appContainer.classList.remove('hidden');
         inputCard.classList.remove('hidden');
         logoutBtn.classList.remove('hidden');
+        userIcon.classList.add('hidden');
       } else {
-        loginCard.classList.remove('hidden');
-        appTitle.classList.add('hidden');
+        loginCard.classList.add('hidden');
+        appTitle.classList.remove('hidden');
         appContainer.classList.remove('hidden');
         inputCard.classList.add('hidden');
         logoutBtn.classList.add('hidden');
+        userIcon.classList.remove('hidden');
       }
     }
+
+    // User icon click handler
+    userIcon.onclick = () => {
+      loginCard.classList.remove('hidden');
+      adminPassword.focus();
+    };
 
     // Login handler
     loginBtn.onclick = () => {
@@ -323,6 +361,7 @@
         adminPassword.value = '';
       } else {
         alert('Incorrect password.');
+        adminPassword.value = '';
       }
     };
 
