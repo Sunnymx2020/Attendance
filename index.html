@@ -127,6 +127,9 @@
       height: 18px;
       accent-color: #64ffda;
     }
+    input[type="number"] {
+      max-width: 100px;
+    }
     .btn {
       background: linear-gradient(45deg, #64ffda, #00b0ff);
       border: none;
@@ -269,6 +272,7 @@
         <input type="checkbox" id="weekOff" aria-label="Week-off (Paid)" />
         Week-off (Paid)
       </label>
+      <input type="number" id="overtimeHours" min="0" step="0.1" value="0" placeholder="Overtime (hrs)" aria-label="Overtime hours" />
       <button class="btn" id="markBtn" aria-label="Mark attendance">Mark</button>
     </div>
     <div class="records-card" id="attendanceRecords" aria-live="polite" aria-label="Attendance records"></div>
@@ -286,13 +290,13 @@
   <script>
     // Firebase config
     const firebaseConfig = {
-      apiKey: "1234567890",
+      apiKey: "AIzaSyBPF1VE82Y3VkZe6IibjqKxBC-XHjM_Wco",
       authDomain: "chat-2024-ff149.firebaseapp.com",
       databaseURL: "https://chat-2024-ff149-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "chat-2024-ff149",
       storageBucket: "chat-2024-ff149.appspot.com",
       messagingSenderId: "146349109253",
-      appId: "1:146349109253:android:1234567890ac6c"
+      appId: "1:146349109253:android:e593afbf0584762519ac6c"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -305,6 +309,7 @@
     const designationSelect = document.getElementById('designationSelect');
     const statusSelect = document.getElementById('statusSelect');
     const weekOff = document.getElementById('weekOff');
+    const overtimeHours = document.getElementById('overtimeHours');
     const markBtn = document.getElementById('markBtn');
     const exportBtn = document.getElementById('exportBtn');
     const userIcon = document.getElementById('userIcon');
@@ -408,11 +413,12 @@
         .join('');
     }
 
-    function addRecord(name, designation, status, date, timestamp) {
+    function addRecord(name, designation, status, overtimeHours, date, timestamp) {
       const div = document.createElement('div');
       div.className = 'record';
+      const otText = overtimeHours > 0 ? `, ${overtimeHours}h OT` : '';
       div.innerHTML = `
-        <span class="record-text">${name} (${designation}): ${status}</span>
+        <span class="record-text">${name} (${designation}): ${status}${otText}</span>
         <span class="record-timestamp">${new Date(parseInt(timestamp)).toLocaleString()}</span>
       `;
 
@@ -422,7 +428,7 @@
         let touchEndX = 0;
 
         function deleteRecord(recordId) {
-          if (confirm(`Delete this record?\n\nName: ${name}\nDesignation: ${designation}\nStatus: ${status}\nTime: ${new Date(parseInt(timestamp)).toLocaleString()}`)) {
+          if (confirm(`Delete this record?\n\nName: ${name}\nDesignation: ${designation}\nStatus: ${status}\nOvertime: ${overtimeHours}h\nTime: ${new Date(parseInt(timestamp)).toLocaleString()}`)) {
             attendanceRef.child(date).child(recordId).remove().then(() => {
               div.innerHTML = `<span class="record-text">(Deleted record)</span><span class="record-timestamp">${new Date(parseInt(timestamp)).toLocaleString()}</span>`;
               loadSalarySummary(date);
@@ -463,7 +469,7 @@
       records.innerHTML = '';
       attendanceRef.child(date).on('child_added', snapshot => {
         const data = snapshot.val();
-        addRecord(data.name, data.designation, data.status, date, snapshot.key);
+        addRecord(data.name, data.designation, data.status, data.overtimeHours || 0, date, snapshot.key);
       });
     }
 
@@ -480,21 +486,25 @@
         Object.entries(records).forEach(([_, record]) => {
           const key = `${record.name}_${record.designation}`;
           if (!employeeData[key]) {
-            employeeData[key] = { name: record.name, designation: record.designation, paidDays: 0 };
+            employeeData[key] = { name: record.name, designation: record.designation, paidDays: 0, overtimeHours: 0 };
           }
           if (record.status === 'Present' || record.status === 'Week-off') {
             employeeData[key].paidDays++;
           }
+          employeeData[key].overtimeHours += parseFloat(record.overtimeHours || 0);
         });
       });
 
-      Object.values(employeeData).forEach(({ name, designation, paidDays }) => {
+      Object.values(employeeData).forEach(({ name, designation, paidDays, overtimeHours }) => {
         const monthlySalary = salaryConfig[designation] || 0;
         const dailySalary = monthlySalary / daysInMonth;
-        const calculatedSalary = Math.round(dailySalary * paidDays);
+        const baseSalary = Math.round(dailySalary * paidDays);
+        const hourlyRate = dailySalary / 8;
+        const overtimePay = Math.round(hourlyRate * overtimeHours);
+        const totalSalary = baseSalary + overtimePay;
         const div = document.createElement('div');
         div.className = 'salary-item';
-        div.textContent = `${name} (${designation}): ${paidDays} paid days, This month salary: ₹${calculatedSalary}`;
+        div.textContent = `${name} (${designation}): ${paidDays} paid days, ${overtimeHours}h OT, This month salary: ₹${totalSalary} (Base: ₹${baseSalary}, OT: ₹${overtimePay})`;
         salarySummary.appendChild(div);
       });
     }
@@ -504,15 +514,17 @@
       const designation = designationSelect.value;
       const date = datePicker.value;
       const status = weekOff.checked ? 'Week-off' : statusSelect.value;
+      const otHours = parseFloat(overtimeHours.value) || 0;
       if (!name || !date || !designation) {
         alert('Please enter a name, select a designation, and select a date.');
         return;
       }
       inputName.value = '';
       weekOff.checked = false;
+      overtimeHours.value = '0';
 
       const timestamp = Date.now();
-      const record = { name, designation, status, timestamp };
+      const record = { name, designation, status, overtimeHours: otHours, timestamp };
       await attendanceRef.child(date).child(timestamp).set(record);
       loadSalarySummary(date);
       loadNameSuggestions();
